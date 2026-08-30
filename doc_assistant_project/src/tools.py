@@ -65,7 +65,8 @@ class ToolLogger:
 """Uses the @tool decorator to create a LangChain tool
 Takes a mathematical expression as input
 Validates the expression for safety (only allow basic math operations)
-Evaluates the expression using Python's eval() function
+
+Evaluate the expression using ast.literal_eval() function
 Logs the tool usage with the ToolLogger
 Returns a formatted result string
 Handles errors gracefully
@@ -74,6 +75,8 @@ def create_calculator_tool(logger: ToolLogger):
     """
     Creates a calculator tool - TO BE IMPLEMENTED
     """
+    import ast
+
     @tool
     def calculator(expression: str) -> str:
         """
@@ -84,7 +87,8 @@ def create_calculator_tool(logger: ToolLogger):
                 raise ValueError(
                     "Expression contains invalid characters. Only basic math operations are allowed."
                 )
-            result = eval(expression)
+            # Safely Evaluate the expression using ast.literal_eval() function
+            result = ast.literal_eval(expression)
             formatted = f"The result of the expression {expression} is {result}"
             logger.log_tool_use(
                 "calculator",
