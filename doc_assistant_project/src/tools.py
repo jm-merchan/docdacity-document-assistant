@@ -6,6 +6,7 @@ Think of these as the agent's Swiss Army knife 🔧 - each tool has a specific p
 from typing import Dict, Any, List, Optional, Literal
 from langchain.tools import tool
 from pydantic import BaseModel, Field
+import ast
 import re
 import json
 from datetime import datetime
@@ -65,8 +66,7 @@ class ToolLogger:
 """Uses the @tool decorator to create a LangChain tool
 Takes a mathematical expression as input
 Validates the expression for safety (only allow basic math operations)
-
-Evaluate the expression using ast.literal_eval() function
+Evaluates the expression using ast (no eval)
 Logs the tool usage with the ToolLogger
 Returns a formatted result string
 Handles errors gracefully
@@ -75,8 +75,6 @@ def create_calculator_tool(logger: ToolLogger):
     """
     Creates a calculator tool - TO BE IMPLEMENTED
     """
-    import ast
-
     @tool
     def calculator(expression: str) -> str:
         """
@@ -87,8 +85,43 @@ def create_calculator_tool(logger: ToolLogger):
                 raise ValueError(
                     "Expression contains invalid characters. Only basic math operations are allowed."
                 )
-            # Safely Evaluate the expression using ast.literal_eval() function
-            result = ast.literal_eval(expression)
+            tree = ast.parse(expression, mode="eval").body
+
+            def ev(n):
+                # Given n, return the value of the expression
+                if isinstance(n, ast.Constant):
+                    # if n is a constant, return the value
+                    return n.value
+                if isinstance(n, ast.UnaryOp) and isinstance(n.op, ast.USub):
+                    # if n is a unary operation, return the value of the operand
+                    return -ev(n.operand)
+                if isinstance(n, ast.BinOp):
+                    # if n is a binary operation, return the value of the left and right operands
+                    a, b = ev(n.left), ev(n.right)
+                    # if n is an addition operation, return the value of the left and right operands
+                    if isinstance(n.op, ast.Add):
+                        return a + b
+                    # if n is a subtraction operation, return the value of the left and right operands
+                    if isinstance(n.op, ast.Sub):
+                        return a - b
+                    # if n is a multiplication operation, return the value of the left and right operands
+                    if isinstance(n.op, ast.Mult):
+                        return a * b
+                    # if n is a division operation, return the value of the left and right operands
+                    if isinstance(n.op, ast.Div):
+                        return a / b
+                    # if n is a modulus operation, return the value of the left and right operands
+                    if isinstance(n.op, ast.Mod):
+                        return a % b
+                    # if n is a power operation, return the value of the left and right operands
+                    if isinstance(n.op, ast.Pow):
+                        return a ** b
+                    # if n is a floor division operation, return the value of the left and right operands
+                    if isinstance(n.op, ast.FloorDiv):
+                        return a // b
+                raise ValueError("Only basic arithmetic is allowed")
+
+            result = ev(tree)
             formatted = f"The result of the expression {expression} is {result}"
             logger.log_tool_use(
                 "calculator",
