@@ -101,7 +101,7 @@ class DocumentAssistant:
 
         current_state = self.workflow.get_state(config).values
 
-        summary = current_state.get("conversation_summary", [])
+        summary = current_state.get("conversation_summary", "")  # Improved: ensuring consistency with AgentState schema returning empty string instead of list
         return summary
 
     def _get_conversation_history(self, config) -> List[BaseMessage]:
