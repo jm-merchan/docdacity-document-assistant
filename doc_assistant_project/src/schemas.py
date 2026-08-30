@@ -20,7 +20,7 @@ class AnswerResponse(BaseModel):
     question: str = Field(description="The original user question")
     answer: str = Field(description="The generated answer")
     sources: List[str] = Field(description="List of source document IDs")
-    confidence: float = Field(description="Confidence score between 0 and 1")
+    confidence: float = Field(ge=0.0, le=1.0, description="Confidence score between 0 and 1") # Improved:Ensure the confidence is between 0 and 1
     timestamp: datetime = Field(default_factory=datetime.now)
 
 
